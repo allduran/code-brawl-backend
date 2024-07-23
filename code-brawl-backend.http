@@ -1,0 +1,6 @@
+@code_brawl_backend_HostAddress = http://localhost:5197
+
+GET {{code_brawl_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
