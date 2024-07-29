@@ -1,0 +1,52 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+      - hotfix/**
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --no-restore
+
+    - name: Run tests
+      run: dotnet test --no-build --verbosity normal
+
+    - name: Build Docker image
+      run: docker build -t your-dockerhub-username/your-app-name .
+
+    - name: Log in to DockerHub
+      run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+    - name: Push Docker image
+      run: docker push your-dockerhub-username/your-app-name
+
+    - name: Deploy to Render
+      if: github.ref == 'refs/heads/main'
+      run: |
+        curl -X POST \
+        -H 'Accept: application/json' \
+        -H 'Authorization: Bearer ${{ secrets.RENDER_API_KEY }}' \
+        -d '{"serviceId": "your-render-service-id", "branch": "main"}' \
+        https://api.render.com/v1/services/your-render-service-id/deploys
